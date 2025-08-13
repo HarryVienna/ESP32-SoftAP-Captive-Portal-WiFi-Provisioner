@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ESP32 WiFi Setup</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container" id="mainContainer">
+        <h1>WLAN Konfiguration</h1>
+        <form id="configForm">
+            
+            <label for="ssid">WLAN Netzwerk <span id="loader" class="loader"></span></label>
+            <div class="select-wrapper">
+                <select id="ssid" name="ssid" required>
+                    <option value="">Scanne Netzwerke...</option>
+                </select>
+            </div>
+            
+            <label for="password">Passwort</label>
+            <div class="input-wrapper">
+                <input type="password" id="password" name="password" placeholder="Leer lassen bei offenem WLAN">
+                <button type="button" id="togglePassword" class="toggle-password">Anzeigen</button>
+            </div>
+
+            <label for="regionSelect">Region</label>
+            <div class="select-wrapper">
+                <select id="regionSelect" required>
+                    <option value="" selected disabled>Bitte Region ausw&auml;hlen</option>
+                </select>
+            </div>
+
+            <label for="timezoneSelect">Zeitzone</label>
+            <div class="select-wrapper">
+                <select id="timezoneSelect" required disabled>
+                    <option value="" selected disabled>Zuerst Region ausw&auml;hlen</option>
+                </select>
+            </div>
+
+            <input type="hidden" id="timezoneValue" name="timezone">
+
+            <input type="submit" value="Speichern & Verbinden">
+        </form>
+    </div>
+
+    <script>
+        window.onload = function() {
+            // --- Referenzen auf HTML-Elemente ---
+            const form = document.getElementById('configForm');
+            const mainContainer = document.getElementById('mainContainer');
+            const ssidSelect = document.getElementById('ssid');
+            const loader = document.getElementById('loader');
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            const regionSelect = document.getElementById('regionSelect');
+            const timezoneSelect = document.getElementById('timezoneSelect');
+            const hiddenTimezoneInput = document.getElementById('timezoneValue');
+
+            // --- Zeitzonen-Daten ---
+            const timezones = [
+                { region: "Africa", description: "(GMT) Casablanca", value: "WET0WEST,M3.5.0,M10.5.0/3" },
+                { region: "Africa", description: "(GMT +01:00) West Central Africa", value: "WAT-1" },
+                { region: "Africa", description: "(GMT +02:00) Harare, Pretoria", value: "CAT-2" },
+                { region: "Africa", description: "(GMT +02:00) Windhoek", value: "WAT-1WAST,M9.1.0,M4.1.0" },
+                { region: "Africa", description: "(GMT +02:00) Cairo", value: "EET-2" },
+                { region: "Africa", description: "(GMT +03:00) Nairobi", value: "EAT-3" },
+                { region: "America", description: "(GMT -03:00) Buenos Aires", value: "ART3" },
+                { region: "America", description: "(GMT -03:00) Brasilia", value: "BRT3BRST,M10.3.0/0,M2.3.0/0" },
+                { region: "America", description: "(GMT -03:00) Greenland", value: "WGT3WGST,M3.5.0/-2,M10.5.0/-1" },
+                { region: "America", description: "(GMT -03:00) Montevideo", value: "UYT3" },
+                { region: "America", description: "(GMT -03:30) Newfoundland", value: "NST3:30NDT,M3.2.0,M11.1.0" },
+                { region: "America", description: "(GMT -03:00) Cayenne, Fortaleza", value: "GFT3" },
+                { region: "America", description: "(GMT -04:00) Atlantic Time (Canada)", value: "AST4ADT,M3.2.0,M11.1.0" },
+                { region: "America", description: "(GMT -04:00) Cuiaba", value: "AMT4AMST,M10.3.0/0,M2.3.0/0" },
+                { region: "America", description: "(GMT -04:00) Santiago", value: "CLT3" },
+                { region: "America", description: "(GMT -04:00) Asuncion", value: "PYT4PYST,M10.1.0/0,M3.4.0/0" },
+                { region: "America", description: "(GMT -04:00) Georgetown, La Paz, Manaus, San Juan", value: "BOT4" },
+                { region: "America", description: "(GMT -04:30) Caracas", value: "VET4:30" },
+                { region: "America", description: "(GMT -05:00) Eastern Time (US & Canada)", value: "EST5EDT,M3.2.0,M11.1.0" },
+                { region: "America", description: "(GMT -05:00) Bogota, Lima, Quito", value: "COT5" },
+                { region: "America", description: "(GMT -05:00) Indiana (East)", value: "EST5EDT,M3.2.0,M11.1.0" },
+                { region: "America", description: "(GMT -06:00) Saskatchewan", value: "CST6" },
+                { region: "America", description: "(GMT -06:00) Central America", value: "CST6" },
+                { region: "America", description: "(GMT -06:00) Guadalajara, Mexico City, Monterrey", value: "CST6CDT,M4.1.0,M10.5.0" },
+                { region: "America", description: "(GMT -06:00) Central Time (US & Canada)", value: "CST6CDT,M3.2.0,M11.1.0" },
+                { region: "America", description: "(GMT -07:00) Chihuahua, La Paz, Mazatlan", value: "MST7MDT,M4.1.0,M10.5.0" },
+                { region: "America", description: "(GMT -07:00) Mountain Time (US & Canada)", value: "MST7MDT,M3.2.0,M11.1.0" },
+                { region: "America", description: "(GMT -07:00) Arizona", value: "MST7" },
+                { region: "America", description: "(GMT -08:00) Baja California", value: "PST8PDT,M3.2.0,M11.1.0" },
+                { region: "America", description: "(GMT -08:00) Pacific Time (US & Canada)", value: "PST8PDT,M3.2.0,M11.1.0" },
+                { region: "America", description: "(GMT -09:00) Alaska", value: "AKST9AKDT,M3.2.0,M11.1.0" },
+                { region: "America", description: "(GMT -10:00) Hawaii-Aleutian", value: "HST10HDT,M3.2.0,M11.1.0" },
+                { region: "Antarctica", description: "(GMT +12:00) McMurdo", value: "NZST-12NZDT,M9.5.0,M4.1.0/3" },
+                { region: "Antarctica", description: "(GMT +11:00) Macquarie", value: "MIST-11" },
+                { region: "Antarctica", description: "(GMT +10:00) DumontDUrville", value: "DDUT-10" },
+                { region: "Antarctica", description: "(GMT +08:00) Casey", value: "AWST-8" },
+                { region: "Antarctica", description: "(GMT +07:00) Davis", value: "DAVT-7" },
+                { region: "Antarctica", description: "(GMT +06:00) Vostok", value: "VOST-6" },
+                { region: "Antarctica", description: "(GMT +05:00) Mawson", value: "MAWT-5" },
+                { region: "Antarctica", description: "(GMT +03:00) Syowa", value: "SYOT-3" },
+                { region: "Antarctica", description: "(GMT -04:00) Palmer", value: "CLT3" },
+                { region: "Antarctica", description: "(GMT -04:00) Rothera", value: "ROTT3" },
+                { region: "Arctic", description: "(GMT +01:00) Longyearbyen", value: "CET-1CEST,M3.5.0,M10.5.0/3" },
+                { region: "Asia", description: "(GMT +12:00) Petropavlovsk-Kamchatsky", value: "PETT-12" },
+                { region: "Asia", description: "(GMT +11:00) Magadan", value: "MAGT-1" },
+                { region: "Asia", description: "(GMT +10:00) Vladivostok", value: "VLAT-10" },
+                { region: "Asia", description: "(GMT +09:00) Yakutsk", value: "YAKT-9" },
+                { region: "Asia", description: "(GMT +09:00) Osaka, Sapporo, Tokyo", value: "JST-9" },
+                { region: "Asia", description: "(GMT +09:00) Seoul", value: "KST-9" },
+                { region: "Asia", description: "(GMT +08:00) Kuala Lumpur, Singapore", value: "SGT-8" },
+                { region: "Asia", description: "(GMT +08:00) Ulaanbaatar", value: "ULAT-8ULAST,M3.5.6,M9.5.6/0" },
+                { region: "Asia", description: "(GMT +08:00) Taipei", value: "CST-8" },
+                { region: "Asia", description: "(GMT +08:00) Irkutsk", value: "IRKT-8" },
+                { region: "Asia", description: "(GMT +08:00) Beijing, Chongqing, Hong Kong, Urumqi", value: "CST-8" },
+                { region: "Asia", description: "(GMT +07:00) Bangkok, Hanoi, Jakarta", value: "WIB-7" },
+                { region: "Asia", description: "(GMT +07:00) Krasnoyarsk", value: "KRAT-7" },
+                { region: "Asia", description: "(GMT +06:30) Yangon (Rangoon)", value: "UNK-6:30" },
+                { region: "Asia", description: "(GMT +06:00) Novosibirsk", value: "NOVT-6" },
+                { region: "Asia", description: "(GMT +06:00) Astana", value: "(GMT-6" },
+                { region: "Asia", description: "(GMT +06:00) Dhaka", value: "BDT-6" },
+                { region: "Asia", description: "(GMT +05:45) Kathmandu", value: "NPT-5:45" },
+                { region: "Asia", description: "(GMT +05:30) Sri Jayawardenepura", value: "IST-5:30" },
+                { region: "Asia", description: "(GMT +05:30) Chennai, Kolkata, Mumbai, New Delhi", value: "IST-5:30" },
+                { region: "Asia", description: "(GMT +05:00) Tashkent", value: "UZT-5" },
+                { region: "Asia", description: "(GMT +05:00) Islamabad, Karachi", value: "PKT-5" },
+                { region: "Asia", description: "(GMT +05:00) Ekaterinburg", value: "YEKT-5" },
+                { region: "Asia", description: "(GMT +04:00) Tbilisi", value: "GET-4" },
+                { region: "Asia", description: "(GMT +04:00) Yerevan", value: "AMT-4" },
+                { region: "Asia", description: "(GMT +04:00) Baku", value: "AZT-4AZST,M3.5.0/4,M10.5.0/5" },
+                { region: "Asia", description: "(GMT +04:00) Abu Dhabi, Muscat", value: "GST-4" },
+                { region: "Asia", description: "(GMT +04:30) Kabul", value: "AFT-4:30" },
+                { region: "Asia", description: "(GMT +03:30) Tehran", value: "IRST-3:30IRDT,80/0,264/0" },
+                { region: "Asia", description: "(GMT +03:00) Baghdad", value: "AST-3" },
+                { region: "Asia", description: "(GMT +03:00) Kuwait, Riyadh", value: "AST-3" },
+                { region: "Asia", description: "(GMT +02:00) Damascus", value: "EET-2EEST,M3.5.5/0,M10.5.5/0" },
+                { region: "Asia", description: "(GMT +02:00) Beirut", value: "EET-2EEST,M3.5.0/0,M10.5.0/0" },
+                { region: "Asia", description: "(GMT +02:00) Amman", value: "EET-2EEST,M3.5.4/24,M10.5.5/1" },
+                { region: "Asia", description: "(GMT +02:00) Jerusalem", value: "IST-2IDT,M3.4.4/26,M10.5.0" },
+                { region: "Atlantic", description: "(GMT) Monrovia, Reykjavik", value: "GMT0" },
+                { region: "Atlantic", description: "(GMT -01:00) Azores", value: "AZOT1AZOST,M3.5.0/0,M10.5.0/1" },
+                { region: "Atlantic", description: "(GMT -01:00) Cape Verde Is.", value: "CVT1" },
+                { region: "Australia", description: "(GMT +10:00) Hobart", value: "AEST-10AEDT,M10.1.0,M4.1.0/3" },
+                { region: "Australia", description: "(GMT +10:00) Brisbane", value: "AEST-10" },
+                { region: "Australia", description: "(GMT +10:00) Canberra, Melbourne, Sydney", value: "AEST-10AEDT,M10.1.0,M4.1.0/3" },
+                { region: "Australia", description: "(GMT +09:30) Adelaide", value: "ACST-9:30ACDT,M10.1.0,M4.1.0/3" },
+                { region: "Australia", description: "(GMT +09:30) Darwin", value: "ACST-9:30" },
+                { region: "Australia", description: "(GMT +08:00) Perth", value: "AWST-8" },
+                { region: "Europe", description: "(GMT) Dublin, Edinburgh, Lisbon, London", value: "GMT0BST,M3.5.0/1,M10.5.0" },
+                { region: "Europe", description: "(GMT +01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague", value: "CET-1CEST,M3.5.0,M10.5.0/3" },
+                { region: "Europe", description: "(GMT +01:00) Sarajevo, Skopje, Warsaw, Zagreb", value: "CET-1CEST,M3.5.0,M10.5.0/3" },
+                { region: "Europe", description: "(GMT +01:00) Brussels, Copenhagen, Madrid, Paris", value: "CET-1CEST,M3.5.0,M10.5.0/3" },
+                { region: "Europe", description: "(GMT +01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna", value: "CET-1CEST,M3.5.0,M10.5.0/3" },
+                { region: "Europe", description: "(GMT +02:00) Chisinau", value: "EET-2EEST,M3.5.0,M10.5.0/3" },
+                { region: "Europe", description: "(GMT +02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius", value: "EET-2EEST,M3.5.0/3,M10.5.0/4" },
+                { region: "Europe", description: "(GMT +02:00) Athens, Bucharest", value: "EET-2EEST,M3.5.0/3,M10.5.0/4" },
+                { region: "Europe", description: "(GMT +03:00) Minsk", value: "MSK-3" },
+                { region: "Europe", description: "(GMT +03:00) Moscow, St. Petersburg, Volgograd", value: "MSK-3" },
+                { region: "Europe", description: "(GMT +03:00) Istanbul", value: "EET-3" },
+                { region: "Indian", description: "(GMT +04:00) Port Louis", value: "MUT-4" },
+                { region: "Indian", description: "(GMT +07:00) Christmas Island", value: "CXT-7" },
+                { region: "Pacific", description: "(GMT +13:00) Nuku'alofa", value: "TOT-13" },
+                { region: "Pacific", description: "(GMT +12:00) Fiji, Marshall Is.", value: "FJT-12FJST,M11.1.0,M1.3.0/3" },
+                { region: "Pacific", description: "(GMT +12:00) Auckland, Wellington", value: "NZST-12NZDT,M9.5.0,M4.1.0/3" },
+                { region: "Pacific", description: "(GMT +11:00) Solomon Is., New Caledonia", value: "SBT-11" },
+                { region: "Pacific", description: "(GMT +10:00) Guam, Port Moresby", value: "PGT-10" },
+                { region: "Pacific", description: "(GMT -11:00) Samoa", value: "WSST-13WSDT,M9.5.0/3,M4.1.0/4" },
+                { region: "Pacific", description: "(GMT -10:00) Hawaii", value: "HST10" },
+                { region: "Pacific", description: "(GMT -05:00) Easter Island", value: "EAST5" }
+            ];
+
+            // --- Formular-Submit-Logik ---
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const submitButton = form.querySelector('input[type="submit"]');
+                submitButton.value = "Speichere...";
+                submitButton.disabled = true;
+                
+                fetch('/save', {
+                    method: 'POST',
+                    body: new URLSearchParams(new FormData(form))
+                })
+                .then(response => {
+                    if (response.ok) {
+                        mainContainer.innerHTML = `
+                            <h1>Konfiguration erhalten</h1>
+                            <p style="text-align:center; font-size: 1.1em;">
+                                Das Ger&auml;t versucht nun, sich mit dem WLAN zu verbinden.
+                                <br><br>
+                                Sie k&ouml;nnen dieses Fenster jetzt schliessen.
+                            </p>`;
+                    } else { throw new Error('Server-Antwort war nicht OK'); }
+                })
+                .catch(error => {
+                    console.error('Fehler beim Speichern:', error);
+                    mainContainer.innerHTML = `
+                        <h1>Fehler beim Speichern</h1>
+                        <p style="text-align:center;">
+                            Die Konfiguration konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.
+                        </p>`;
+                });
+            });
+
+            // --- WLAN-Scan-Logik ---
+            fetch('/scan.json')
+                .then(response => response.json())
+                .then(data => {
+                    ssidSelect.innerHTML = '<option value="">Bitte Netzwerk ausw&auml;hlen</option>';
+                    if (data.aps && data.aps.length > 0) {
+                        data.aps.forEach(ap => {
+                            const option = new Option(ap.ssid, ap.ssid);
+                            ssidSelect.add(option);
+                        });
+                    } else {
+                         ssidSelect.innerHTML = '<option value="">Keine Netzwerke gefunden</option>';
+                    }
+                    loader.style.visibility = 'hidden';
+                })
+                .catch(error => {
+                    console.error('Fehler beim WLAN-Scan:', error);
+                    ssidSelect.innerHTML = '<option value="">Scan fehlgeschlagen</option>';
+                    loader.style.visibility = 'hidden';
+                });
+
+            // --- Passwort-Anzeigen-Logik ---
+            togglePassword.addEventListener('click', function () {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.textContent = type === 'password' ? 'Anzeigen' : 'Verbergen';
+            });
+
+            // --- Gekoppelte Dropdown-Logik für Zeitzonen ---
+            const regions = [...new Set(timezones.map(tz => tz.region))];
+            regions.forEach(region => {
+                const option = new Option(region, region);
+                regionSelect.add(option);
+            });
+
+            regionSelect.addEventListener('change', function() {
+                const selectedRegion = this.value;
+                timezoneSelect.innerHTML = '<option value="" selected disabled>Bitte Zeitzone ausw&auml;hlen</option>';
+                hiddenTimezoneInput.value = '';
+                
+                const regionTimezones = timezones.filter(tz => tz.region === selectedRegion);
+                regionTimezones.forEach(tz => {
+                    const option = new Option(tz.description, tz.value);
+                    timezoneSelect.add(option);
+                });
+                timezoneSelect.disabled = false;
+            });
+
+            timezoneSelect.addEventListener('change', function() {
+                hiddenTimezoneInput.value = this.value;
+            });
+        };
+    </script>
+</body>
+</html>

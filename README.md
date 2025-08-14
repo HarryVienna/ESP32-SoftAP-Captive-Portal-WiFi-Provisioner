@@ -1,7 +1,7 @@
 # ESP-IDF WiFi Provisioning with Captive Portal
 
 A robust, self-contained C++ component for the ESP32 that provides a user-friendly WiFi provisioning experience using a captive portal. 
-This project is built using the pure **Espressif IoT Development Framework (ESP-IDF)**, with no Arduino dependencies.
+This project is built using the pure **Espressif IoT Development Framework (ESP-IDF)**, with no Arduino dependencies. This is still work in progress!
 
 The goal is to provide a simple component for any IoT project that requires initial WiFi setup by an end-user.
 

@@ -79,7 +79,7 @@ extern "C" void app_main(void) {
     // Check if credentials are already saved in NVS
     if (provisioner.is_provisioned()) {
         // If yes, load them into the class
-        provisioner.load_credentials_from_nvs();
+        provisioner.get_credentials();
     } else {
         // If no, start the blocking provisioning process.
         // The `true` flag means credentials will be saved permanently.

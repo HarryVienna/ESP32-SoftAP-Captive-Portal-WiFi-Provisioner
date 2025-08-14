@@ -1,9 +1,6 @@
 /**
  * @file wifi_provisioner.hpp
- * @author Ihr Name & Gemini AI
  * @brief Eine robuste, vollständig gekapselte Klasse für die WLAN-Provisionierung auf dem ESP32.
- * @version 2.0
- * @date 2025-08-13
  *
  * ## Konzept: WiFi-Provisioning
  *
@@ -87,7 +84,7 @@
  * // Prüfe, ob das Gerät bereits konfiguriert ist.
  * if (provisioner.is_provisioned()) {
  * // Wenn ja, lade die Daten aus dem NVS in das Objekt.
- * provisioner.load_credentials_from_nvs();
+ * provisioner.get_credentials();
  * } else {
  * // Wenn nein, starte den blockierenden Provisionierungs-Prozess.
  * // 'true' bedeutet, dass die eingegebenen Daten dauerhaft gespeichert werden.

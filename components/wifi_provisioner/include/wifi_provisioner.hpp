@@ -1,6 +1,6 @@
 /**
  * @file wifi_provisioner.hpp
- * @author Ihr Name & Gemini AI
+ * @author Harald Kreuzer
  * @brief Eine robuste, vollständig gekapselte Klasse für die WLAN-Provisionierung auf dem ESP32.
  * @version 2.0
  * @date 2025-08-13

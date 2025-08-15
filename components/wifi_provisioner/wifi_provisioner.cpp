@@ -16,9 +16,11 @@ static const char *TAG = "WIFI_PROV";
 // Bit für unsere Event Group
 #define PROV_SUCCESS_BIT BIT0
 
-// Prototypen & eingebettete Files
+// Prototypen
 void start_dns_server();
 void stop_dns_server();
+
+// eingebettete 
 extern const char root_html_start[] asm("_binary_index_en_html_start");
 extern const char root_html_end[]   asm("_binary_index_en_html_end");
 extern const char style_css_start[] asm("_binary_style_css_start");
@@ -28,7 +30,7 @@ extern const char style_css_end[]   asm("_binary_style_css_end");
 
 /**
  * @brief Hilfsfunktion zum Dekodieren eines URL-kodierten Strings.
- * * @param out Puffer für den dekodierten String.
+ * @param out Puffer für den dekodierten String.
  * @param in  Der URL-kodierte Eingabe-String.
  */
 static void url_decode(char *out, const char *in, size_t out_len) {

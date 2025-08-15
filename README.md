@@ -3,6 +3,8 @@
 A simple C++ component for the ESP32 that provides a user-friendly WiFi provisioning experience using a captive portal. 
 This project is built using the pure **Espressif IoT Development Framework (ESP-IDF)**, with no Arduino dependencies. This is still work in progress!
 
+A detailed description is on  [https://www.haraldkreuzer.net/en/news/esp32-wifi-provisioning-soft-ap-and-captive-portal](https://www.haraldkreuzer.net/en/news/esp32-wifi-provisioning-soft-ap-and-captive-portal)
+
 The goal is to provide a easy to use component for any IoT project that requires initial WiFi setup by an end-user.
 
 <img width="30%" height="30%" alt="Screenshot_20250815-150712" src="https://github.com/user-attachments/assets/227e6309-af0c-45a9-9c58-1d974dc09470" />
@@ -115,4 +117,5 @@ and in components/wifi_provisioner/wifi_provisioner.cpp:
 extern const char root_html_start[] asm("_binary_index_xx_html_start");
 extern const char root_html_end[]   asm("_binary_index_xx_html_end");
 ```
+
 

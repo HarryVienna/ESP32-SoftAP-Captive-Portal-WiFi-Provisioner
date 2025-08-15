@@ -1,9 +1,9 @@
 # ESP-IDF WiFi Provisioning with Captive Portal
 
-A robust, self-contained C++ component for the ESP32 that provides a user-friendly WiFi provisioning experience using a captive portal. 
+A simple C++ component for the ESP32 that provides a user-friendly WiFi provisioning experience using a captive portal. 
 This project is built using the pure **Espressif IoT Development Framework (ESP-IDF)**, with no Arduino dependencies. This is still work in progress!
 
-The goal is to provide a simple component for any IoT project that requires initial WiFi setup by an end-user.
+The goal is to provide a easy to use component for any IoT project that requires initial WiFi setup by an end-user.
 
 _screenshot_
 
@@ -100,9 +100,18 @@ extern "C" void app_main(void) {
 
 ## Configuration
 
-The web interface files (index.html, style.css) are embedded directly into the firmware binary. This is configured in components/wifi_provisioner/CMakeLists.txt:
+The web interface files per language (index_xx.html, style.css) are embedded directly into the firmware binary.
+
+This is configured in components/wifi_provisioner/CMakeLists.txt:
 ```
 # ...
-target_add_binary_data(${COMPONENT_TARGET} "web/index.html" TEXT)
+target_add_binary_data(${COMPONENT_TARGET} "web/index_xx.html" TEXT)
 target_add_binary_data(${COMPONENT_TARGET} "web/style.css"  TEXT)
+```
+
+and in components/wifi_provisioner/wifi_provisioner.cpp:
+```
+# ...
+extern const char root_html_start[] asm("_binary_index_xx_html_start");
+extern const char root_html_end[]   asm("_binary_index_xx_html_end");
 ```

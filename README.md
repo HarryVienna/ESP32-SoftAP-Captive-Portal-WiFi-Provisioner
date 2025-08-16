@@ -42,14 +42,14 @@ esp-idf-project/
 │ └── CMakeLists.txt
 ├── components/
 │ └── wifi_provisioner/ <-- All provisioning logic is here
-│ ├── web/
-│ │ ├── index.html
-│ │ └── style.css
-│ ├── include/
-│ │ └── wifi_provisioner.hpp
-│ ├── dns_server.cpp
-│ ├── wifi_provisioner.cpp
-│ └── CMakeLists.txt
+│   ├── web/
+│   │ ├── index.html
+│   │ └── style.css
+│   ├── include/
+│   │ └── wifi_provisioner.hpp
+│   ├── dns_server.cpp
+│   ├── wifi_provisioner.cpp
+│   └── CMakeLists.txt
 └── ...
 ```
 
@@ -117,5 +117,6 @@ and in components/wifi_provisioner/wifi_provisioner.cpp:
 extern const char root_html_start[] asm("_binary_index_xx_html_start");
 extern const char root_html_end[]   asm("_binary_index_xx_html_end");
 ```
+
 
 

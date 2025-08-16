@@ -28,27 +28,19 @@ extern "C" void app_main(void) {
     // Endlosschleife für die Hauptanwendung
     ESP_LOGI(TAG, "Main application logic can now run. Waiting for WiFi events...");
     while(true) {
-        time_t now;
-        struct tm timeinfo;
-        char strftime_buf[64];
+        // Frage die Klasse direkt, ob die Zeit synchron ist.
+        if (provisioner.is_time_synchronized()) {
+            time_t now;
+            struct tm timeinfo;
+            char strftime_buf[64];
 
-        // Hole die aktuelle Zeit
-        time(&now);
-        
-        // Konvertiere sie in die lokale Zeit (unter Berücksichtigung der gesetzten Zeitzone)
-        localtime_r(&now, &timeinfo);
-
-        // Prüfe, ob die Zeit schon synchronisiert wurde.
-        // (tm_year ist Jahre seit 1900, also ist alles < 100 vor dem Jahr 2000)
-        if (timeinfo.tm_year < 100) {
-            ESP_LOGI(TAG, "Zeit ist noch nicht mit dem NTP-Server synchronisiert.");
-        } else {
-            // Formatiere die Zeit in einen lesbaren String (z.B. "Mittwoch, 13. August 2025 10:32:29")
-            // strftime-Referenz: https://www.cplusplus.com/reference/ctime/strftime/
+            time(&now);
+            localtime_r(&now, &timeinfo);
             strftime(strftime_buf, sizeof(strftime_buf), "%A, %d. %B %Y %H:%M:%S", &timeinfo);
             
-            // Gib die formatierte Zeit aus
             ESP_LOGI(TAG, "Aktuelle lokale Zeit: %s", strftime_buf);
+        } else {
+            ESP_LOGI(TAG, "Zeit ist noch nicht mit dem NTP-Server synchronisiert.");
         }
         
         // Warte eine Sekunde bis zur nächsten Ausgabe

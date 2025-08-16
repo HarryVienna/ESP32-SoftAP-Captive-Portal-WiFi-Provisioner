@@ -154,6 +154,12 @@ public:
      */
     void synchronize_time();
 
+    /**
+     * @brief Prüft, ob die Systemzeit erfolgreich mit einem NTP-Server synchronisiert wurde.
+     * @return true, wenn die Zeit synchron ist, andernfalls false.
+     */
+    bool is_time_synchronized() const;
+
 private:
     void init_wifi_();
 
@@ -181,8 +187,11 @@ private:
     std::string _password;
     std::string _timezone;
 
-    // Anzahl der Connect Versuche
-    int _retry_num = 0;
+    // Gab es schon eine erfolgreiche Verbindung
+    bool _has_been_connected = false;
+
+    // Dieses Flag wird vom SNTP-Callback auf 'true' gesetzt.
+    bool _is_time_synced = false;
 
     // Flag, um die SNTP-Initialisierung zu verfolgen
     bool _sntp_initialized = false; 
@@ -195,4 +204,7 @@ private:
     
     httpd_handle_t server_ = nullptr;
     bool wifi_initialized_ = false;
+
+    // Statischer Pointer, damit der C-Callback auf die Instanz zugreifen kann
+    static WifiProvisioner* s_instance;
 };

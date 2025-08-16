@@ -13,7 +13,7 @@
 static const char *TAG = "WIFI_PROV";
 #define PROV_NVS_NAMESPACE "wifi_prov"
 
-// Bit für unsere Event Group
+// Bit für Event Group
 #define PROV_SUCCESS_BIT BIT0
 
 // Prototypen
@@ -26,7 +26,13 @@ extern const char root_html_end[]   asm("_binary_index_en_html_end");
 extern const char style_css_start[] asm("_binary_style_css_start");
 extern const char style_css_end[]   asm("_binary_style_css_end");
 
-#define WIFI_MAX_RETRIES 5
+#define WIFI_MAX_RETRIES_INITIAL 5       // Kurze Wartezeit für die erste Verbindung
+#define WIFI_MAX_RETRIES_RECONNECT 3600 // Lange Wartezeit für Wiederverbindung (3600 Versuche * 1s = 1 Stunde)
+
+static int s_retry_num = 0;
+static int s_max_retries = WIFI_MAX_RETRIES_INITIAL; // Startet immer mit dem kurzen Limit
+
+WifiProvisioner* WifiProvisioner::s_instance = nullptr;
 
 /**
  * @brief Hilfsfunktion zum Dekodieren eines URL-kodierten Strings.
@@ -54,6 +60,8 @@ static void url_decode(char *out, const char *in, size_t out_len) {
 
 // Konstruktor: Erstellt die Event Group
 WifiProvisioner::WifiProvisioner() {
+    s_instance = this; // Speichere die Adresse dieser Instanz
+
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
       ESP_ERROR_CHECK(nvs_flash_erase());
@@ -452,12 +460,15 @@ void WifiProvisioner::wifi_event_handler(void* arg, esp_event_base_t event_base,
         wifi_event_sta_disconnected_t* event = (wifi_event_sta_disconnected_t*) event_data;
         ESP_LOGW(TAG, "EVENT: STA_DISCONNECTED. Reason code: %d.", event->reason);
 
-        if (provisioner->_retry_num  < WIFI_MAX_RETRIES) {
+        if (s_retry_num < s_max_retries) {
+            // Warte eine Sekunde vor dem nächsten Versuch, um den Router nicht zu überlasten
+            vTaskDelay(pdMS_TO_TICKS(1000)); 
+
             esp_wifi_connect();
-            provisioner->_retry_num ++;
-            ESP_LOGI(TAG, "Retrying to connect... (Attempt %d/%d)", provisioner->_retry_num , WIFI_MAX_RETRIES);
+            s_retry_num++;
+            ESP_LOGI(TAG, "Retrying to connect... (Attempt %d/%d)", s_retry_num, s_max_retries);
         } else {
-            ESP_LOGE(TAG, "Failed to connect after %d attempts. Erasing credentials and rebooting into provisioning mode.", WIFI_MAX_RETRIES);
+            ESP_LOGE(TAG, "Failed to connect after %d attempts. Erasing credentials and rebooting into provisioning mode.", s_max_retries);
             
             // Lösche die gespeicherten Zugangsdaten
             nvs_handle_t nvs_handle;
@@ -476,8 +487,13 @@ void WifiProvisioner::wifi_event_handler(void* arg, esp_event_base_t event_base,
     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         ESP_LOGI(TAG, "EVENT: GOT_IP. Successfully connected! IP: " IPSTR, IP2STR(&event->ip_info.ip));
-        // Setze den Zähler bei Erfolg zurück
-        provisioner->_retry_num = 0; 
+        
+        // Flag, dass es eine erfolgreiche Verbindung gab
+        provisioner->_has_been_connected = true;
+
+        // Setze den Zähler bei Erfolg zurück und erhöhe das Retry Limit
+        s_retry_num = 0; 
+        s_max_retries = WIFI_MAX_RETRIES_RECONNECT;
 
         // Starte die Zeitsynchronisierung
         provisioner->synchronize_time();
@@ -486,6 +502,10 @@ void WifiProvisioner::wifi_event_handler(void* arg, esp_event_base_t event_base,
 
 void WifiProvisioner::time_sync_notification_cb(struct timeval *tv) {
     ESP_LOGI(TAG, "Zeitsynchronisierung erfolgreich abgeschlossen.");
+    // Greife über den statischen Pointer auf die Instanz zu und setze das Flag
+    if (s_instance) {
+        s_instance->_is_time_synced = true;
+    }
 }
 
 void WifiProvisioner::synchronize_time() {
@@ -501,4 +521,8 @@ void WifiProvisioner::synchronize_time() {
     esp_sntp_init();
 
     _sntp_initialized = true; // Setze das Flag nach der ersten erfolgreichen Initialisierung
+}
+
+bool WifiProvisioner::is_time_synchronized() const {
+    return _is_time_synced;
 }

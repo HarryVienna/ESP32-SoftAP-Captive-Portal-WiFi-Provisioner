@@ -1,46 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ESP32 WiFi Setup</title>
+    <title>Impostazioni WiFi ESP32</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container" id="mainContainer">
-        <h1>Wi-Fi Yapılandırması</h1>
+        <h1>Configurazione WiFi</h1>
         <form id="configForm">
             
-            <label for="ssid">Wi-Fi Ağı <span id="loader" class="loader"></span></label>
+            <label for="ssid">Rete WiFi <span id="loader" class="loader"></span></label>
             <div class="select-wrapper">
                 <select id="ssid" name="ssid" required>
-                    <option value="">Ağlar taranıyor...</option>
+                    <option value="">Scansione reti in corso...</option>
                 </select>
             </div>
             
-            <label for="password">Parola</label>
+            <label for="password">Password</label>
             <div class="input-wrapper">
-                <input type="password" id="password" name="password" placeholder="Açık Wi-Fi için boş bırakınız">
-                <button type="button" id="togglePassword" class="toggle-password">Göster</button>
+                <input type="password" id="password" name="password" placeholder="Lascia vuoto per WiFi aperte">
+                <button type="button" id="togglePassword" class="toggle-password">Mostra</button>
             </div>
 
-            <label for="regionSelect">Bölge</label>
+            <label for="regionSelect">Regione</label>
             <div class="select-wrapper">
                 <select id="regionSelect" required>
-                    <option value="" selected disabled>Lütfen bölge seçiniz</option>
+                    <option value="" selected disabled>Seleziona una regione</option>
                 </select>
             </div>
 
-            <label for="timezoneSelect">Saat Dilimi</label>
+            <label for="timezoneSelect">Fuso Orario</label>
             <div class="select-wrapper">
                 <select id="timezoneSelect" required disabled>
-                    <option value="" selected disabled>Önce bölge seçiniz</option>
+                    <option value="" selected disabled>Seleziona prima una regione</option>
                 </select>
             </div>
 
             <input type="hidden" id="timezoneValue" name="timezone">
 
-            <input type="submit" value="Kaydet & Bağlan">
+            <input type="submit" value="Salva e Connetti">
         </form>
     </div>
 
@@ -1932,7 +1932,7 @@
             form.addEventListener('submit', function(event) {
                 event.preventDefault();
                 const submitButton = form.querySelector('input[type="submit"]');
-                submitButton.value = "Kaydediliyor...";
+                submitButton.value = "Salvataggio in corso...";
                 submitButton.disabled = true;
                 
                 fetch('/save', {
@@ -1942,20 +1942,20 @@
                 .then(response => {
                     if (response.ok) {
                         mainContainer.innerHTML = `
-                            <h1>Yapılandırma alındı</h1>
+                            <h1>Configurazione Ricevuta</h1>
                             <p style="text-align:center; font-size: 1.1em;">
-                                Cihaz Wi-Fi ağına bağlanmaya çalışıyor.
+                                Il dispositivo proverà ora a connettersi al WiFi.
                                 <br><br>
-                                Bu pencereyi kapatabilirsiniz.
+                                Ora puoi chiudere questa finestra.
                             </p>`;
-                    } else { throw new Error('Sunucu yanıtı geçersiz'); }
+                    } else { throw new Error('Server response was not OK'); }
                 })
                 .catch(error => {
-                    console.error('Kaydetme hatası:', error);
+                    console.error('Error Saving:', error);
                     mainContainer.innerHTML = `
-                            <h1>Kaydetme hatası</h1>
+                            <h1>Errore durante il salvataggio</h1>
                             <p style="text-align:center;">
-                                Yapılandırma kaydedilemedi. Lütfen tekrar deneyiniz.
+                                Impossibile salvare la configurazione. Riprova.
                             </p>`;
                 });
             });
@@ -1964,20 +1964,20 @@
             fetch('/scan.json')
                 .then(response => response.json())
                 .then(data => {
-                    ssidSelect.innerHTML = '<option value="">Lütfen ağ seçiniz</option>';
+                    ssidSelect.innerHTML = '<option value="">Seleziona una rete</option>';
                     if (data.aps && data.aps.length > 0) {
                         data.aps.forEach(ap => {
                             const option = new Option(ap.ssid, ap.ssid);
                             ssidSelect.add(option);
                         });
                     } else {
-                        ssidSelect.innerHTML = '<option value="">Hiç ağ bulunamadı</option>';
+                        ssidSelect.innerHTML = '<option value="">Nessuna rete trovata</option>';
                     }
                     loader.style.visibility = 'hidden';
                 })
                 .catch(error => {
-                    console.error('Wi-Fi tarama hatası:', error);
-                    ssidSelect.innerHTML = '<option value="">Tarama başarısız</option>';
+                    console.error('Error during WiFi scan:', error);
+                    ssidSelect.innerHTML = '<option value="">Scansione fallita</option>';
                     loader.style.visibility = 'hidden';
                 });
 
@@ -1985,7 +1985,7 @@
             togglePassword.addEventListener('click', function () {
                 const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
                 passwordInput.setAttribute('type', type);
-                this.textContent = type === 'password' ? 'Göster' : 'Gizle';
+                this.textContent = type === 'password' ? 'Mostra' : 'Nascondi';
             });
 
             // --- Coupled Dropdown Logic for Timezones (ADAPTED) ---
@@ -1997,7 +1997,7 @@
 
             regionSelect.addEventListener('change', function() {
                 const selectedRegion = this.value;
-                timezoneSelect.innerHTML = '<option value="" selected disabled>Lütfen saat dilimi seçiniz</option>';
+                timezoneSelect.innerHTML = '<option value="" selected disabled>Seleziona un fuso orario</option>';
                 hiddenTimezoneInput.value = '';
                 
                 const regionTimezones = timezones[selectedRegion] || [];
@@ -2049,7 +2049,7 @@
                         }
                     }
                 } catch (e) {
-                    console.error("Otomatik saat dilimi tespiti sırasında hata:", e);
+                    console.error("Errore durante il rilevamento automatico del fuso orario:", e);
                 }
             }
 

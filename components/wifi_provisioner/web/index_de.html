@@ -1988,7 +1988,7 @@
                 this.textContent = type === 'password' ? 'Anzeigen' : 'Verbergen';
             });
 
-            // --- Gekoppelte Dropdown-Logik für Zeitzonen (ANGEPASST) ---
+            // --- Gekoppelte Dropdown-Logik für Zeitzonen ---
             const regions = Object.keys(timezones);
             regions.sort().forEach(region => { // .sort() für alphabetische Reihenfolge
                 const option = new Option(region, region);

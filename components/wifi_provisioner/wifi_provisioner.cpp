@@ -208,7 +208,7 @@ esp_err_t WifiProvisioner::get_credentials() {
 esp_err_t WifiProvisioner::connect_sta(const char* hostname) {
     // 1. Sicherheitsprüfung: Sind überhaupt Zugangsdaten in der Klasse vorhanden?
     if (_ssid.empty()) {
-        ESP_LOGE(TAG, "Cannot connect: No credentials loaded. Call 'load_credentials_from_nvs()' or 'start_provisioning()' first.");
+        ESP_LOGE(TAG, "Cannot connect: No credentials loaded. Call 'get_credentials()' or 'start_provisioning()' first.");
         return ESP_FAIL;
     }
 

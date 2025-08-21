@@ -1988,7 +1988,7 @@
                 this.textContent = type === 'password' ? 'Göster' : 'Gizle';
             });
 
-            // --- Coupled Dropdown Logic for Timezones (ADAPTED) ---
+            // --- Coupled Dropdown Logic for Timezones ---
             const regions = Object.keys(timezones);
             regions.sort().forEach(region => { // .sort() for alphabetical order
                 const option = new Option(region, region);

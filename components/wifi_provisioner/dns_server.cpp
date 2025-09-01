@@ -127,7 +127,6 @@ static void dns_server_task(void *pvParameters) {
         if (len > 0) {
             // Ignoriere Anfragen, die bereits Antworten sind
             if ((request_buffer[2] & DNS_FLAG_QR) == 0) {
-                ESP_LOGI(TAG, "DNS request...");
                 create_dns_response(request_buffer, response_buffer, &ip_info.ip);
                 sendto(sock_fd, response_buffer, len + DNS_ANSWER_LEN, 0, (struct sockaddr *)&client, client_len);
             }

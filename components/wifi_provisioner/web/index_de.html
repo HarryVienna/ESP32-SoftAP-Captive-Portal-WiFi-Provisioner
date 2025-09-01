@@ -12,16 +12,17 @@
         <form id="configForm">
             
             <label for="ssid">WLAN Netzwerk <span id="loader" class="loader"></span></label>
-            <div class="select-wrapper">
+            <div class="input-wrapper">
                 <select id="ssid" name="ssid" required>
                     <option value="">Scanne Netzwerke...</option>
                 </select>
+                <button type="button" id="scanButton" class="toggle-button">Scannen</button>
             </div>
             
             <label for="password">Passwort</label>
             <div class="input-wrapper">
                 <input type="password" id="password" name="password" placeholder="Leer lassen bei offenem WLAN">
-                <button type="button" id="togglePassword" class="toggle-password">Anzeigen</button>
+                <button type="button" id="togglePassword" class="toggle-button">Anzeigen</button>
             </div>
 
             <label for="regionSelect">Region</label>
@@ -1960,26 +1961,45 @@
                 });
             });
 
-            // --- WLAN-Scan-Logik ---
-            fetch('/scan.json')
-                .then(response => response.json())
-                .then(data => {
-                    ssidSelect.innerHTML = '<option value="">Bitte Netzwerk ausw&auml;hlen</option>';
-                    if (data.aps && data.aps.length > 0) {
-                        data.aps.forEach(ap => {
-                            const option = new Option(ap.ssid, ap.ssid);
-                            ssidSelect.add(option);
-                        });
-                    } else {
-                        ssidSelect.innerHTML = '<option value="">Keine Netzwerke gefunden</option>';
-                    }
-                    loader.style.visibility = 'hidden';
-                })
-                .catch(error => {
-                    console.error('Fehler beim WLAN-Scan:', error);
-                    ssidSelect.innerHTML = '<option value="">Scan fehlgeschlagen</option>';
-                    loader.style.visibility = 'hidden';
-                });
+            function scanForNetworks() {
+                // Button deaktivieren und Lade-Animation anzeigen
+                scanButton.disabled = true;
+                loader.style.visibility = 'visible';
+                ssidSelect.innerHTML = '<option value="">Scanne Netzwerke...</option>';
+
+                fetch('/scan.json')
+                    .then(response => response.json())
+                    .then(data => {
+                        ssidSelect.innerHTML = '<option value="">Bitte Netzwerk ausw&auml;hlen</option>';
+                        if (data.aps && data.aps.length > 0) {
+                            data.aps.forEach(ap => {
+                                const option = new Option(ap.ssid, ap.ssid);
+
+                                //const displayText = `${ap.ssid} (${ap.rssi} dBm)`; // Erzeugt z.B. "WIRELESSNETWORK (-49 dBm)"
+                                //const option = new Option(displayText, ap.ssid);   // Anzeigetext und Wert getrennt
+
+                                ssidSelect.add(option);
+                            });
+                        } else {
+                            ssidSelect.innerHTML = '<option value="">Keine Netzwerke gefunden</option>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Fehler beim WLAN-Scan:', error);
+                        ssidSelect.innerHTML = '<option value="">Scan fehlgeschlagen</option>';
+                    })
+                    .finally(() => {
+                        // Unabhängig vom Ergebnis: Button wieder aktivieren und Lade-Animation ausblenden
+                        scanButton.disabled = false;
+                        loader.style.visibility = 'hidden';
+                    });
+            }
+
+            // Event listener für den Scan-Button hinzufügen
+            scanButton.addEventListener('click', scanForNetworks);
+
+            // Initialen Scan beim Laden der Seite durchführen
+            scanForNetworks();
 
             // --- Passwort-Anzeigen-Logik ---
             togglePassword.addEventListener('click', function () {

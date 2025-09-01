@@ -12,16 +12,16 @@
         <form id="configForm">
             
             <label for="ssid">WiFi Network <span id="loader" class="loader"></span></label>
-            <div class="select-wrapper">
+            <div class="input-wrapper">
                 <select id="ssid" name="ssid" required>
                     <option value="">Scanning for networks...</option>
                 </select>
+                <button type="button" id="scanButton" class="toggle-button">Scan</button>
             </div>
-            
             <label for="password">Password</label>
             <div class="input-wrapper">
                 <input type="password" id="password" name="password" placeholder="Leave empty for open WiFi">
-                <button type="button" id="togglePassword" class="toggle-password">Show</button>
+                <button type="button" id="togglePassword" class="toggle-button">Show</button>
             </div>
 
             <label for="regionSelect">Region</label>
@@ -50,6 +50,7 @@
             const form = document.getElementById('configForm');
             const mainContainer = document.getElementById('mainContainer');
             const ssidSelect = document.getElementById('ssid');
+            const scanButton = document.getElementById('scanButton');
             const loader = document.getElementById('loader');
             const togglePassword = document.getElementById('togglePassword');
             const passwordInput = document.getElementById('password');
@@ -1960,26 +1961,45 @@
                 });
             });
 
-            // --- WiFi Scan Logic ---
-            fetch('/scan.json')
-                .then(response => response.json())
-                .then(data => {
-                    ssidSelect.innerHTML = '<option value="">Please select a network</option>';
-                    if (data.aps && data.aps.length > 0) {
-                        data.aps.forEach(ap => {
-                            const option = new Option(ap.ssid, ap.ssid);
-                            ssidSelect.add(option);
-                        });
-                    } else {
-                        ssidSelect.innerHTML = '<option value="">No networks found</option>';
-                    }
-                    loader.style.visibility = 'hidden';
-                })
-                .catch(error => {
-                    console.error('Error during WiFi scan:', error);
-                    ssidSelect.innerHTML = '<option value="">Scan failed</option>';
-                    loader.style.visibility = 'hidden';
-                });
+            function scanForNetworks() {
+                // Button deaktivieren und Lade-Animation anzeigen
+                scanButton.disabled = true;
+                loader.style.visibility = 'visible';
+                ssidSelect.innerHTML = '<option value="">Scanning for networks...</option>';
+
+                fetch('/scan.json')
+                    .then(response => response.json())
+                    .then(data => {
+                        ssidSelect.innerHTML = '<option value="">Please select a network</option>';
+                        if (data.aps && data.aps.length > 0) {
+                            data.aps.forEach(ap => {
+                                const option = new Option(ap.ssid, ap.ssid);
+
+                                //const displayText = `${ap.ssid} (${ap.rssi} dBm)`; // Erzeugt z.B. "WIRELESSNETWORK (-49 dBm)"
+                                //const option = new Option(displayText, ap.ssid);   // Anzeigetext und Wert getrennt
+
+                                ssidSelect.add(option);
+                            });
+                        } else {
+                            ssidSelect.innerHTML = '<option value="">No networks found</option>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error during WiFi scan:', error);
+                        ssidSelect.innerHTML = '<option value="">Scan failed</option>';
+                    })
+                    .finally(() => {
+                        // Unabhängig vom Ergebnis: Button wieder aktivieren und Lade-Animation ausblenden
+                        scanButton.disabled = false;
+                        loader.style.visibility = 'hidden';
+                    });
+            }
+
+            // Event listener für den Scan-Button hinzufügen
+            scanButton.addEventListener('click', scanForNetworks);
+
+            // Initialen Scan beim Laden der Seite durchführen
+            scanForNetworks();
 
             // --- Password Toggle Logic ---
             togglePassword.addEventListener('click', function () {

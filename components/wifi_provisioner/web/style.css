@@ -39,7 +39,7 @@ label {
 }
 
 /* ========================================================== */
-/* Allgemeine Formularelemente                               */
+/* Allgemeine Formularelemente                                */
 /* ========================================================== */
 input, select {
     width: 100%;
@@ -97,13 +97,17 @@ select:disabled {
     100% { transform: rotate(360deg); }
 }
 
-/* Passwort-Feld mit "Anzeigen"-Button */
+/* Container für Elemente mit Button daneben (Passwort, WLAN-Scan) */
 .input-wrapper {
     display: flex;
     margin-top: 8px;
 }
 
-.input-wrapper input {
+/* START: MODIFIED SELECTOR */
+/* Diese Regel gilt nun für input UND select Elemente im Wrapper */
+.input-wrapper input,
+.input-wrapper select {
+/* END: MODIFIED SELECTOR */
     flex-grow: 1;
     margin-top: 0;
     border-top-right-radius: 0;
@@ -111,7 +115,7 @@ select:disabled {
     border-right: none;
 }
 
-.toggle-password {
+.toggle-button {
     border: 1px solid #ccc;
     border-left: 1px solid #e0e0e0;
     background: #f7f7f7;
@@ -123,8 +127,14 @@ select:disabled {
     font-size: 15px;
 }
 
-.toggle-password:hover {
+.toggle-button:hover {
     background: #e9e9e9;
+}
+
+.toggle-button:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    color: #999;
 }
 
 /* Verbesserte Dropdown-Listen (Select) */

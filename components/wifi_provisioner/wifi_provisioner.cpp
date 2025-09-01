@@ -22,8 +22,8 @@ void start_dns_server();
 void stop_dns_server();
 
 // eingebettete 
-extern const char root_html_start[] asm("_binary_index_de_html_start");
-extern const char root_html_end[]   asm("_binary_index_de_html_end");
+extern const char root_html_start[] asm("_binary_index_en_html_start");
+extern const char root_html_end[]   asm("_binary_index_en_html_end");
 extern const char style_css_start[] asm("_binary_style_css_start");
 extern const char style_css_end[]   asm("_binary_style_css_end");
 

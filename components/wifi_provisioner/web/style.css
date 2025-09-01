@@ -119,12 +119,20 @@ select:disabled {
     border: 1px solid #ccc;
     border-left: 1px solid #e0e0e0;
     background: #f7f7f7;
-    padding: 0 15px;
     cursor: pointer;
     border-radius: 0 4px 4px 0;
     color: #007aff;
-    font-weight: 600;
-    font-size: 15px;
+    padding: 0 12px; 
+    flex-shrink: 0; 
+    width: 46px; 
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-button svg {
+    width: 20px; /* Grösse der Icons anpassen */
+    height: 20px;
 }
 
 .toggle-button:hover {

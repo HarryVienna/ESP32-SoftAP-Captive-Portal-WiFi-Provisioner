@@ -7,14 +7,16 @@ A detailed description is on  [https://www.haraldkreuzer.net/en/news/esp32-wifi-
 
 The goal is to provide a easy to use component for any IoT project that requires initial WiFi setup by an end-user.
 
-<img width="30%" height="30%" alt="Screenshot_20250815-150712" src="https://github.com/user-attachments/assets/227e6309-af0c-45a9-9c58-1d974dc09470" />
+<img width="40%" height="40%" alt="ESP32 SoftAP" src="https://github.com/user-attachments/assets/04b070fc-f514-4c60-8c45-d3dc467b7099" />
+
+
 
 ## Features
 
 - **User-Friendly Captive Portal:** Automatically opens a configuration page on a user's phone or laptop after connecting to the ESP32's access point.
 - **Dynamic WiFi Scanning:** Scans for and lists available WiFi networks in a dropdown menu.
 - **Secure Password Entry:** Includes a "Show/Hide" button for the password field to prevent typos.
-- **Advanced Timezone Selection:** Uses chained dropdowns (Region -> Timezone) for a clean user interface.
+- **Advanced Timezone Selection:** The time zone is automatically filled in based on the smartphone time zone.
 - **Robust Error Handling:** If a user saves incorrect credentials (e.g., wrong password), the device will attempt to connect a few times, then automatically erase the bad credentials and restart in provisioning mode. This makes the device "unbrickable" by a user.
 - **Optional Persistent Storage:** The provisioning process can be configured to save credentials permanently to NVS flash or to use them only for the current session (stored in RAM).
 - **Automatic Time Sync (SNTP):** Once connected to WiFi, the class automatically synchronizes the system time with an internet time server.
@@ -117,6 +119,8 @@ and in components/wifi_provisioner/wifi_provisioner.cpp:
 extern const char root_html_start[] asm("_binary_index_xx_html_start");
 extern const char root_html_end[]   asm("_binary_index_xx_html_end");
 ```
+
+
 
 
 

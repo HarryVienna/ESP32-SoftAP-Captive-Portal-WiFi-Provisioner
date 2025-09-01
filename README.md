@@ -7,8 +7,8 @@ A detailed description is on  [https://www.haraldkreuzer.net/en/news/esp32-wifi-
 
 The goal is to provide a easy to use component for any IoT project that requires initial WiFi setup by an end-user.
 
+<img width="40%" height="40%" alt="ESP32 SoftAP" src="https://github.com/user-attachments/assets/04b070fc-f514-4c60-8c45-d3dc467b7099" />
 
-<img width="40%" height="40%" alt="Screenshot_20250815-150712" src="https://github.com/user-attachments/assets/199c876f-88f6-454a-9cb1-263eb4630ce2" />
 
 
 ## Features
@@ -119,6 +119,7 @@ and in components/wifi_provisioner/wifi_provisioner.cpp:
 extern const char root_html_start[] asm("_binary_index_xx_html_start");
 extern const char root_html_end[]   asm("_binary_index_xx_html_end");
 ```
+
 
 
 

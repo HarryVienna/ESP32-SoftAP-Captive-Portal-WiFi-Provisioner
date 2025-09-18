@@ -103,11 +103,9 @@ select:disabled {
     margin-top: 8px;
 }
 
-/* START: MODIFIED SELECTOR */
 /* Diese Regel gilt nun für input UND select Elemente im Wrapper */
 .input-wrapper input,
 .input-wrapper select {
-/* END: MODIFIED SELECTOR */
     flex-grow: 1;
     margin-top: 0;
     border-top-right-radius: 0;

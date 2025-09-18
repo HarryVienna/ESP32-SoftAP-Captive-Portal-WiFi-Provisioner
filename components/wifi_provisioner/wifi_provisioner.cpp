@@ -8,7 +8,6 @@
 #include <vector>
 #include <algorithm>
 #include <cstring>
-#include <string_view>
 #include <time.h>
 
 static const char *TAG = "WIFI_PROV";

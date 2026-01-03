@@ -6,6 +6,7 @@
 #include "nvs.h"
 #include "cJSON.h"
 #include <vector>
+#include <set>
 #include <algorithm>
 #include <cstring>
 #include <time.h>
@@ -357,16 +358,37 @@ esp_err_t WifiProvisioner::scan_get_handler_(httpd_req_t *req) {
         return a.rssi > b.rssi;
     });
 
+    // Set zum Speichern bereits hinzugefügter SSIDs
+    std::set<std::string> added_ssids;
+
     // 3. JSON aus der sortierten Liste erstellen
     cJSON *root = cJSON_CreateObject();
     cJSON *aps = cJSON_CreateArray();
     cJSON_AddItemToObject(root, "aps", aps);
 
-    for (const auto& record : ap_records) {
-        cJSON *ap_item = cJSON_CreateObject();
-        cJSON_AddStringToObject(ap_item, "ssid", (const char *)record.ssid);
-        cJSON_AddNumberToObject(ap_item, "rssi", record.rssi);
-        cJSON_AddItemToArray(aps, ap_item);
+for (const auto& record : ap_records) {
+        // SSID in C++ String konvertieren für einfachen Vergleich
+        std::string current_ssid = reinterpret_cast<const char*>(record.ssid);
+
+        // Leere SSIDs (versteckte Netzwerke) ignorieren
+        if (current_ssid.empty()) {
+            continue; 
+        }
+
+        // Prüfen, ob SSID schon im Set ist
+        if (added_ssids.find(current_ssid) == added_ssids.end()) {
+            // SSID ist neu -> Hinzufügen
+            added_ssids.insert(current_ssid);
+
+            cJSON *ap_item = cJSON_CreateObject();
+            cJSON_AddStringToObject(ap_item, "ssid", current_ssid.c_str());
+            cJSON_AddNumberToObject(ap_item, "rssi", record.rssi);
+            // Optional: Verschlüsselungsmethode hinzufügen, falls für UI nützlich
+            // cJSON_AddNumberToObject(ap_item, "auth", record.authmode);
+            
+            cJSON_AddItemToArray(aps, ap_item);
+        }
+        // Falls SSID schon im Set ist, tun wir nichts (überspringen das Duplikat)
     }
     
     char* json_str = cJSON_PrintUnformatted(root);

@@ -6,9 +6,10 @@
 #include "nvs.h"
 #include "cJSON.h"
 #include <vector>
-#include <set>
 #include <algorithm>
 #include <cstring>
+#include <set>
+#include <string>
 #include <time.h>
 
 static const char *TAG = "WIFI_PROV";
@@ -28,7 +29,7 @@ extern const char style_css_start[] asm("_binary_style_css_start");
 extern const char style_css_end[]   asm("_binary_style_css_end");
 
 #define WIFI_MAX_RETRIES_INITIAL 5       // Kurze Wartezeit für die erste Verbindung
-#define WIFI_MAX_RETRIES_RECONNECT 3600 // Lange Wartezeit für Wiederverbindung (3600 Versuche * 1s = 1 Stunde)
+#define WIFI_MAX_RETRIES_RECONNECT 3600  // Lange Wartezeit für Wiederverbindung (3600 Versuche * 1s = 1 Stunde)
 
 static int s_retry_num = 0;
 static int s_max_retries = WIFI_MAX_RETRIES_INITIAL; // Startet immer mit dem kurzen Limit
@@ -366,29 +367,22 @@ esp_err_t WifiProvisioner::scan_get_handler_(httpd_req_t *req) {
     cJSON *aps = cJSON_CreateArray();
     cJSON_AddItemToObject(root, "aps", aps);
 
-for (const auto& record : ap_records) {
-        // SSID in C++ String konvertieren für einfachen Vergleich
-        std::string current_ssid = reinterpret_cast<const char*>(record.ssid);
+    std::set<std::string> seen_ssids;
 
-        // Leere SSIDs (versteckte Netzwerke) ignorieren
-        if (current_ssid.empty()) {
-            continue; 
-        }
+    for (const auto& record : ap_records) {
+        std::string ssid((const char*)record.ssid);
 
-        // Prüfen, ob SSID schon im Set ist
-        if (added_ssids.find(current_ssid) == added_ssids.end()) {
-            // SSID ist neu -> Hinzufügen
-            added_ssids.insert(current_ssid);
+        // Leere SSIDs überspringen
+        if (ssid.empty()) continue;
 
-            cJSON *ap_item = cJSON_CreateObject();
-            cJSON_AddStringToObject(ap_item, "ssid", current_ssid.c_str());
-            cJSON_AddNumberToObject(ap_item, "rssi", record.rssi);
-            // Optional: Verschlüsselungsmethode hinzufügen, falls für UI nützlich
-            // cJSON_AddNumberToObject(ap_item, "auth", record.authmode);
-            
-            cJSON_AddItemToArray(aps, ap_item);
-        }
-        // Falls SSID schon im Set ist, tun wir nichts (überspringen das Duplikat)
+        // Doppelte SSIDs überspringen (erste = stärkste bleibt)
+        if (seen_ssids.count(ssid) > 0) continue;
+        seen_ssids.insert(ssid);
+
+        cJSON *ap_item = cJSON_CreateObject();
+        cJSON_AddStringToObject(ap_item, "ssid", ssid.c_str());
+        cJSON_AddNumberToObject(ap_item, "rssi", record.rssi);
+        cJSON_AddItemToArray(aps, ap_item);
     }
     
     char* json_str = cJSON_PrintUnformatted(root);

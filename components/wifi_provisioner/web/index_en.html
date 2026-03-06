@@ -26,9 +26,8 @@
                         <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/>
                     </svg>
                 </button>
-
-
             </div>
+            
             <label for="password">Password</label>
             <div class="input-wrapper">
                 <input type="password" id="password" name="password" placeholder="Leave empty for open WiFi">
@@ -44,7 +43,11 @@
                         <path d="M13.5 14.5 1.5 2.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     </svg>
                 </button>
+            </div>
 
+            <label for="hostname">Hostname</label>
+            <div class="input-wrapper">
+                <input type="text" id="hostname" name="hostname" placeholder="ESP32" maxlength="63" pattern="[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]|[A-Za-z0-9]" title="Only letters, digits, and hyphens. Must not start or end with a hyphen.">
             </div>
 
             <label for="regionSelect">Region</label>

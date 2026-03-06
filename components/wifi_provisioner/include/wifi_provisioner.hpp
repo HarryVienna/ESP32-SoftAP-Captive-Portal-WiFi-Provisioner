@@ -92,7 +92,7 @@
  * }
  * * // Stelle nun die Verbindung her, entweder mit den alten (geladenen)
  * // oder den neuen (frisch eingegebenen) Zugangsdaten.
- * provisioner.connect_sta("Mein-ESP32");
+ * provisioner.connect_sta();
  *
  * ESP_LOGI(TAG, "Main application logic can now run.");
  * while(true) {
@@ -143,10 +143,10 @@ public:
     /**
      * @brief Versucht, eine Verbindung mit den in der Klasse gespeicherten Zugangsdaten herzustellen.
      *
-     * @param hostname Der gewünschte Name des Geräts im Netzwerk.
+     * Der Hostname wird aus den Provisionierungsdaten übernommen. Wurde keiner angegeben, wird "ESP32" verwendet.
      * @return esp_err_t ESP_OK bei Erfolg der Initiierung.
      */
-    esp_err_t connect_sta(const char* hostname);
+    esp_err_t connect_sta();
 
     /**
      * @brief Konfiguriert und startet den SNTP-Client zur Zeitsynchronisierung.
@@ -175,7 +175,7 @@ private:
     static esp_err_t style_get_handler_(httpd_req_t *req);
     static esp_err_t captive_portal_handler_(httpd_req_t *req);
 
-    esp_err_t load_credentials_from_nvs_(std::string& ssid, std::string& password, std::string& timezone);
+    esp_err_t load_credentials_from_nvs_(std::string& ssid, std::string& password, std::string& timezone, std::string& hostname);
     esp_err_t save_credentials_to_nvs_();
 
     // Statische Methoden für C-Callbacks
@@ -185,6 +185,7 @@ private:
     // Member-Variablen zum Speichern der Zugangsdaten
     std::string _ssid;
     std::string _password;
+    std::string _hostname;
     std::string _timezone;
 
     // Gab es schon eine erfolgreiche Verbindung

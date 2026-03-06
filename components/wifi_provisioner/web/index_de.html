@@ -45,6 +45,11 @@
                 </button>                
             </div>
 
+            <label for="hostname">Hostname</label>
+            <div class="input-wrapper">
+                <input type="text" id="hostname" name="hostname" placeholder="ESP32" maxlength="63" pattern="[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]|[A-Za-z0-9]" title="Nur Buchstaben, Ziffern und Bindestriche. Darf nicht mit einem Bindestrich beginnen oder enden.">
+            </div>
+
             <label for="regionSelect">Region</label>
             <div class="select-wrapper">
                 <select id="regionSelect" required>

@@ -206,30 +206,53 @@ bool WifiProvisioner::is_provisioned() {
 
 esp_err_t WifiProvisioner::get_credentials() {
     ESP_LOGI(TAG, "Loading credentials from NVS into class...");
-    return load_credentials_from_nvs_(_ssid, _password, _timezone);
+    return load_credentials_from_nvs_(_ssid, _password, _timezone, _hostname);
 }
 
-esp_err_t WifiProvisioner::connect_sta(const char* hostname) {
+esp_err_t WifiProvisioner::connect_sta() {
     // 1. Sicherheitsprüfung: Sind überhaupt Zugangsdaten in der Klasse vorhanden?
     if (_ssid.empty()) {
         ESP_LOGE(TAG, "Cannot connect: No credentials loaded. Call 'get_credentials()' or 'start_provisioning()' first.");
         return ESP_FAIL;
     }
 
-    // 2. Logging der in der Klasse gespeicherten Daten
+    // 2. Hostname: Falls leer, Standardwert "ESP32" verwenden, dann bereinigen
+    if (_hostname.empty()) {
+        _hostname = "ESP32";
+    }
+
+    // Hostname bereinigen: Nur Buchstaben, Ziffern und Bindestriche erlaubt
+    std::string sanitized;
+    sanitized.reserve(_hostname.size());
+    for (char c : _hostname) {
+        if (c == ' ') {
+            sanitized += '-';
+        } else if (std::isalnum(static_cast<unsigned char>(c)) || c == '-') {
+            sanitized += c;
+        }
+    }
+    // Führende/abschließende Bindestriche entfernen
+    while (!sanitized.empty() && sanitized.front() == '-') sanitized.erase(sanitized.begin());
+    while (!sanitized.empty() && sanitized.back() == '-') sanitized.pop_back();
+    // Auf 63 Zeichen begrenzen
+    if (sanitized.size() > 63) sanitized.resize(63);
+    // Fallback falls nach Bereinigung leer
+    _hostname = sanitized.empty() ? "ESP32" : sanitized;
+
+    // 3. Logging der in der Klasse gespeicherten Daten
     ESP_LOGI(TAG, "Attempting to connect with credentials stored in the class instance:");
     ESP_LOGI(TAG, "  -> SSID:     '%s'", _ssid.c_str());
     ESP_LOGI(TAG, "  -> Password: %s", _password.length() > 0 ? "YES (hidden for security)" : "NO (open network)");
     ESP_LOGI(TAG, "  -> Timezone: '%s'", _timezone.c_str());
 
-    // 3. Hostname für das STA-Interface setzen
+    // 4. Hostname für das STA-Interface setzen
     esp_netif_t *sta_netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
     if (sta_netif) {
-        ESP_ERROR_CHECK(esp_netif_set_hostname(sta_netif, hostname));
-        ESP_LOGI(TAG, "  -> Hostname set to: '%s'", hostname);
+        ESP_ERROR_CHECK(esp_netif_set_hostname(sta_netif, _hostname.c_str()));
+        ESP_LOGI(TAG, "  -> Hostname set to: '%s'", _hostname.c_str());
     }
 
-    // 4. WiFi-Konfiguration mit den Member-Variablen erstellen
+    // 5. WiFi-Konfiguration mit den Member-Variablen erstellen
     wifi_config_t wifi_config = {};
     strncpy((char*)wifi_config.sta.ssid, _ssid.c_str(), sizeof(wifi_config.sta.ssid) - 1);
     strncpy((char*)wifi_config.sta.password, _password.c_str(), sizeof(wifi_config.sta.password) - 1);
@@ -240,13 +263,13 @@ esp_err_t WifiProvisioner::connect_sta(const char* hostname) {
         wifi_config.sta.threshold.authmode = WIFI_AUTH_OPEN;
     }
     
-    // 5. WiFi-System starten (der eigentliche Verbindungsaufbau geschieht im Event-Handler)
+    // 6. WiFi-System starten (der eigentliche Verbindungsaufbau geschieht im Event-Handler)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
     ESP_LOGI(TAG, "WiFi system started. Waiting for connection events...");
 
-    // 6. Zeitzone aus der Member-Variable anwenden
+    // 7. Zeitzone aus der Member-Variable anwenden
     setenv("TZ", _timezone.c_str(), 1);
     tzset();
     ESP_LOGI(TAG, "System timezone set to: '%s'", _timezone.c_str());
@@ -255,7 +278,7 @@ esp_err_t WifiProvisioner::connect_sta(const char* hostname) {
 }
 
 // NVS Handler
-esp_err_t WifiProvisioner::load_credentials_from_nvs_(std::string& ssid, std::string& password, std::string& timezone) {
+esp_err_t WifiProvisioner::load_credentials_from_nvs_(std::string& ssid, std::string& password, std::string& timezone, std::string& hostname) {
     nvs_handle_t h;
     esp_err_t err = nvs_open(PROV_NVS_NAMESPACE, NVS_READONLY, &h);
     if (err != ESP_OK) return err;
@@ -273,13 +296,19 @@ esp_err_t WifiProvisioner::load_credentials_from_nvs_(std::string& ssid, std::st
         nvs_get_str(h, "password", &password[0], &required_size);
         password.pop_back();
     }
+    // Hostname
+    if (nvs_get_str(h, "hostname", NULL, &required_size) == ESP_OK) {
+        hostname.resize(required_size);
+        nvs_get_str(h, "hostname", &hostname[0], &required_size);
+        hostname.pop_back();
+    }    
     // Timezone
     if (nvs_get_str(h, "timezone", NULL, &required_size) == ESP_OK) {
         timezone.resize(required_size);
         nvs_get_str(h, "timezone", &timezone[0], &required_size);
         timezone.pop_back();
     }
-    
+
     nvs_close(h);
     return ESP_OK;
 }
@@ -302,7 +331,10 @@ esp_err_t WifiProvisioner::save_credentials_to_nvs_() {
 
     err = nvs_set_str(nvs_handle, "timezone", _timezone.c_str());
     if (err != ESP_OK) ESP_LOGE(TAG, "Failed to save timezone to NVS");
-    
+
+    err = nvs_set_str(nvs_handle, "hostname", _hostname.c_str());
+    if (err != ESP_OK) ESP_LOGE(TAG, "Failed to save hostname to NVS");
+
     // Bestätige die Schreibvorgänge
     err = nvs_commit(nvs_handle);
     if (err != ESP_OK) {
@@ -424,33 +456,38 @@ esp_err_t WifiProvisioner::save_post_handler_(httpd_req_t *req) {
     char password_decoded[64] = {0};
     char timezone_encoded[128] = {0};
     char timezone_decoded[128] = {0};
+    char hostname_encoded[64] = {0};
+    char hostname_decoded[64] = {0};
 
     // Extrahiere die Key-Value-Paare aus dem POST-Body
     if (httpd_query_key_value(content.c_str(), "ssid", ssid_encoded, sizeof(ssid_encoded)) != ESP_OK ||
         httpd_query_key_value(content.c_str(), "timezone", timezone_encoded, sizeof(timezone_encoded)) != ESP_OK ||
         strlen(ssid_encoded) == 0 || strlen(timezone_encoded) == 0) {
-        
+
         ESP_LOGE(TAG, "Bad request: ssid or timezone parameter missing.");
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "BAD REQUEST: SSID und Zeitzone sind erforderlich.");
         return ESP_FAIL;
     }
 
-    // Passwort ist optional
+    // Passwort und Hostname sind optional
     httpd_query_key_value(content.c_str(), "password", password_encoded, sizeof(password_encoded));
+    httpd_query_key_value(content.c_str(), "hostname", hostname_encoded, sizeof(hostname_encoded));
 
     // Hole den `this` Pointer auf die Klasseninstanz
     auto* provisioner = static_cast<WifiProvisioner*>(req->user_ctx);
 
-    url_decode(ssid_decoded,   ssid_encoded,   sizeof(ssid_decoded));
-    url_decode(password_decoded, password_encoded, sizeof(password_decoded));
-    url_decode(timezone_decoded, timezone_encoded, sizeof(timezone_decoded));
+    url_decode(ssid_decoded,     ssid_encoded,     sizeof(ssid_decoded));
+    url_decode(password_decoded, password_encoded,  sizeof(password_decoded));
+    url_decode(timezone_decoded, timezone_encoded,  sizeof(timezone_decoded));
+    url_decode(hostname_decoded, hostname_encoded,  sizeof(hostname_decoded));
 
     // Speichere die empfangenen und dekodierten Daten in den Member-Variablen der Klasse
     provisioner->_ssid = ssid_decoded;
     provisioner->_password = password_decoded;
     provisioner->_timezone = timezone_decoded;
+    provisioner->_hostname = hostname_decoded;
 
-    ESP_LOGI(TAG, "Credentials temporarily stored. Decoded timezone: %s", timezone_decoded);
+    ESP_LOGI(TAG, "Credentials temporarily stored. Decoded timezone: %s, hostname: %s", timezone_decoded, hostname_decoded);
 
     // Wenn das `persistent_storage`-Flag gesetzt wurde, speichere die Daten auch dauerhaft im NVS
     if (provisioner->_persistent_storage) {
@@ -497,6 +534,7 @@ void WifiProvisioner::wifi_event_handler(void* arg, esp_event_base_t event_base,
             nvs_erase_key(nvs_handle, "ssid");
             nvs_erase_key(nvs_handle, "password");
             nvs_erase_key(nvs_handle, "timezone");
+            nvs_erase_key(nvs_handle, "hostname");
             nvs_commit(nvs_handle);
             nvs_close(nvs_handle);
             

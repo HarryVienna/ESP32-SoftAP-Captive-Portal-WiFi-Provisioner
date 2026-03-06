@@ -18,12 +18,12 @@ extern "C" void app_main(void) {
     } else {
         // Option B: Keine Daten im NVS. Starte den Provisionierungs-Prozess.
         // Dieser füllt die Member-Variablen und speichert die Daten dauerhaft (wegen `true`).
-        provisioner.start_provisioning("ESP32-Setup", false);
+        provisioner.start_provisioning("ESP32-WiFi-Provisioning", false);
     }
 
     // SCHRITT 2: Verbinden
     // `connect_sta` verwendet nun die Daten, die in Schritt 1 geladen wurden.
-    provisioner.connect_sta("Mein-ESP32");
+    provisioner.connect_sta();
 
     // Endlosschleife für die Hauptanwendung
     ESP_LOGI(TAG, "Main application logic can now run. Waiting for WiFi events...");

@@ -206,7 +206,7 @@ bool WifiProvisioner::is_provisioned() {
 
 esp_err_t WifiProvisioner::get_credentials() {
     ESP_LOGI(TAG, "Loading credentials from NVS into class...");
-    return load_credentials_from_nvs_(_ssid, _password, _timezone, _hostname);
+    return load_credentials_from_nvs_(_ssid, _password, _hostname, _timezone);
 }
 
 esp_err_t WifiProvisioner::connect_sta() {
@@ -329,11 +329,11 @@ esp_err_t WifiProvisioner::save_credentials_to_nvs_() {
     err = nvs_set_str(nvs_handle, "password", _password.c_str());
     if (err != ESP_OK) ESP_LOGE(TAG, "Failed to save password to NVS");
 
-    err = nvs_set_str(nvs_handle, "timezone", _timezone.c_str());
-    if (err != ESP_OK) ESP_LOGE(TAG, "Failed to save timezone to NVS");
-
     err = nvs_set_str(nvs_handle, "hostname", _hostname.c_str());
     if (err != ESP_OK) ESP_LOGE(TAG, "Failed to save hostname to NVS");
+
+    err = nvs_set_str(nvs_handle, "timezone", _timezone.c_str());
+    if (err != ESP_OK) ESP_LOGE(TAG, "Failed to save timezone to NVS");
 
     // Bestätige die Schreibvorgänge
     err = nvs_commit(nvs_handle);
@@ -454,10 +454,10 @@ esp_err_t WifiProvisioner::save_post_handler_(httpd_req_t *req) {
     char ssid_decoded[128] = {0};
     char password_encoded[64] = {0};
     char password_decoded[64] = {0};
-    char timezone_encoded[128] = {0};
-    char timezone_decoded[128] = {0};
     char hostname_encoded[64] = {0};
     char hostname_decoded[64] = {0};
+    char timezone_encoded[128] = {0};
+    char timezone_decoded[128] = {0};
 
     // Extrahiere die Key-Value-Paare aus dem POST-Body
     if (httpd_query_key_value(content.c_str(), "ssid", ssid_encoded, sizeof(ssid_encoded)) != ESP_OK ||
@@ -478,14 +478,14 @@ esp_err_t WifiProvisioner::save_post_handler_(httpd_req_t *req) {
 
     url_decode(ssid_decoded,     ssid_encoded,     sizeof(ssid_decoded));
     url_decode(password_decoded, password_encoded,  sizeof(password_decoded));
-    url_decode(timezone_decoded, timezone_encoded,  sizeof(timezone_decoded));
     url_decode(hostname_decoded, hostname_encoded,  sizeof(hostname_decoded));
+    url_decode(timezone_decoded, timezone_encoded,  sizeof(timezone_decoded));
 
     // Speichere die empfangenen und dekodierten Daten in den Member-Variablen der Klasse
     provisioner->_ssid = ssid_decoded;
     provisioner->_password = password_decoded;
-    provisioner->_timezone = timezone_decoded;
     provisioner->_hostname = hostname_decoded;
+    provisioner->_timezone = timezone_decoded;
 
     ESP_LOGI(TAG, "Credentials temporarily stored. Decoded timezone: %s, hostname: %s", timezone_decoded, hostname_decoded);
 
@@ -533,8 +533,8 @@ void WifiProvisioner::wifi_event_handler(void* arg, esp_event_base_t event_base,
             nvs_open(PROV_NVS_NAMESPACE, NVS_READWRITE, &nvs_handle);
             nvs_erase_key(nvs_handle, "ssid");
             nvs_erase_key(nvs_handle, "password");
-            nvs_erase_key(nvs_handle, "timezone");
             nvs_erase_key(nvs_handle, "hostname");
+            nvs_erase_key(nvs_handle, "timezone");
             nvs_commit(nvs_handle);
             nvs_close(nvs_handle);
             

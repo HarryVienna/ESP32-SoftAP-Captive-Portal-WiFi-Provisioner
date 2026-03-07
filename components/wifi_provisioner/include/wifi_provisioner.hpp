@@ -175,7 +175,7 @@ private:
     static esp_err_t style_get_handler_(httpd_req_t *req);
     static esp_err_t captive_portal_handler_(httpd_req_t *req);
 
-    esp_err_t load_credentials_from_nvs_(std::string& ssid, std::string& password, std::string& timezone, std::string& hostname);
+    esp_err_t load_credentials_from_nvs_(std::string& ssid, std::string& password, std::string& hostname, std::string& timezone);
     esp_err_t save_credentials_to_nvs_();
 
     // Statische Methoden für C-Callbacks

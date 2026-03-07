@@ -278,7 +278,7 @@ esp_err_t WifiProvisioner::connect_sta() {
 }
 
 // NVS Handler
-esp_err_t WifiProvisioner::load_credentials_from_nvs_(std::string& ssid, std::string& password, std::string& timezone, std::string& hostname) {
+esp_err_t WifiProvisioner::load_credentials_from_nvs_(std::string& ssid, std::string& password, std::string& hostname, std::string& timezone) {
     nvs_handle_t h;
     esp_err_t err = nvs_open(PROV_NVS_NAMESPACE, NVS_READONLY, &h);
     if (err != ESP_OK) return err;

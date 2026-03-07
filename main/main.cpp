@@ -18,7 +18,7 @@ extern "C" void app_main(void) {
     } else {
         // Option B: Keine Daten im NVS. Starte den Provisionierungs-Prozess.
         // Dieser füllt die Member-Variablen und speichert die Daten dauerhaft (wegen `true`).
-        provisioner.start_provisioning("ESP32-WiFi-Provisioning", false);
+        provisioner.start_provisioning("ESP32-WiFi-Provisioning", true);
     }
 
     // SCHRITT 2: Verbinden
